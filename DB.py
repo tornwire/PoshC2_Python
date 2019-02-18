@@ -36,7 +36,7 @@ def initializedb():
         Output TEXT,
         User TEXT,
         SentTime TEXT,
-        CompletedTime TEXT,
+        UpdatedTime TEXT,
         ImplantID INTEGER,
         FOREIGN KEY(ImplantID) REFERENCES Implants(ImplantID))"""
 
@@ -379,18 +379,18 @@ def insert_task(randomuri, command, user):
   c = conn.cursor()
   if user is None:
     user = ""
-  c.execute("INSERT INTO Tasks (RandomURI, Command, Output, User, SentTime, CompletedTime, ImplantID) VALUES (?, ?, ?, ?, ?, ?, ?)", (randomuri, command, "", user, sent_time, "", implantId))
+  c.execute("INSERT INTO Tasks (RandomURI, Command, Output, User, SentTime, UpdatedTime, ImplantID) VALUES (?, ?, ?, ?, ?, ?, ?)", (randomuri, command, "", user, sent_time, "", implantId))
   conn.commit()
   return c.lastrowid
 
 def update_task(taskId, output):
   now = datetime.datetime.now()
-  completedTime = now.strftime("%m/%d/%Y %H:%M:%S")
+  updatedTime = now.strftime("%m/%d/%Y %H:%M:%S")
   conn = sqlite3.connect(Database)
   conn.text_factory = str
   conn.row_factory = sqlite3.Row
   c = conn.cursor()
-  c.execute("UPDATE Tasks SET Output=?, CompletedTime=? WHERE TaskID=?", (output, completedTime, taskId))
+  c.execute("UPDATE Tasks SET Output=?, UpdatedTime=? WHERE TaskID=?", (output, updatedTime, taskId))
   conn.commit()
   return c.lastrowid
 
