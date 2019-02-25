@@ -18,6 +18,7 @@ DownloadURI = urlConfig.fetchConnUrl()
 Sounds = "No"
 ServerPort = "443"
 EnableNotifications = "No"
+ChunkSize = 50737418
 
 # ClockworkSMS - https://www.clockworksms.com
 APIKEY = ""

